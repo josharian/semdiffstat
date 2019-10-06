@@ -49,8 +49,8 @@ func main() {
 		log.Fatalf("could not parse Go files %v and %v: %v\n", aName, bName, err)
 	}
 
+	sep := findAlign(changes)
 	for _, c := range changes {
-		// TODO: align | characters
 		// TODO: general UI improvements
 		if c.Inserted {
 			fmt.Printf("%v (inserted) %s\n", c.Name, pluses(c.InsLines))
@@ -61,7 +61,7 @@ func main() {
 			continue
 		}
 		// Modified/other
-		fmt.Printf("%v | %d %s%s\n", c.Name, c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
+		fmt.Printf("%v | %d %s%s\n", align(c.Name, sep, 0), c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
 	}
 
 	fmt.Println()
@@ -78,4 +78,16 @@ func pluses(ins int) string {
 }
 func minuses(del int) string {
 	return boldRed.Sprint(strings.Repeat("-", del))
+}
+func align(name string, max, pad int) string {
+	return name + strings.Repeat(" ", (max-len(name))+pad)
+}
+func findAlign(changes []*semdiffstat.Change) (max int) {
+	for _, c := range changes {
+		n := len(c.Name)
+		if n > max {
+			max = n
+		}
+	}
+	return max
 }
