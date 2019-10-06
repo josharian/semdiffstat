@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/fatih/color"
 	"github.com/whatsnu/semdiffstat"
@@ -49,22 +50,23 @@ func main() {
 		log.Fatalf("could not parse Go files %v and %v: %v\n", aName, bName, err)
 	}
 
-	sep := findAlign(changes)
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 8, 0, '\t', 0)
 	for _, c := range changes {
 		// TODO: general UI improvements
 		if c.Inserted {
-			fmt.Printf("%v (inserted) %s\n", c.Name, pluses(c.InsLines))
+			fmt.Fprintf(w, "%v\t | %s (inserted)\n", c.Name, pluses(c.InsLines))
 			continue
 		}
 		if c.Deleted {
-			fmt.Printf("%v (deleted) %s\n", c.Name, minuses(c.DelLines))
+			fmt.Fprintf(w, "%v\t | %s (deleted)\n", c.Name, minuses(c.DelLines))
 			continue
 		}
 		// Modified/other
-		fmt.Printf("%v | %d %s%s\n", align(c.Name, sep, 0), c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
+		fmt.Fprintf(w, "%v\t | %d %s%s\n", c.Name, c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
 	}
-
-	fmt.Println()
+	fmt.Fprintln(w)
+	w.Flush()
 }
 
 var (
@@ -78,16 +80,4 @@ func pluses(ins int) string {
 }
 func minuses(del int) string {
 	return boldRed.Sprint(strings.Repeat("-", del))
-}
-func align(name string, max, pad int) string {
-	return name + strings.Repeat(" ", (max-len(name))+pad)
-}
-func findAlign(changes []*semdiffstat.Change) (max int) {
-	for _, c := range changes {
-		n := len(c.Name)
-		if n > max {
-			max = n
-		}
-	}
-	return max
 }
