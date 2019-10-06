@@ -50,18 +50,17 @@ func main() {
 		log.Fatalf("could not parse Go files %v and %v: %v\n", aName, bName, err)
 	}
 
-	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 0, 8, 0, '\t', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
 	for _, c := range changes {
 		// TODO: general UI improvements
-		if c.Inserted {
-			fmt.Fprintf(w, "%v\t | %s (inserted)\n", c.Name, pluses(c.InsLines))
-			continue
-		}
-		if c.Deleted {
-			fmt.Fprintf(w, "%v\t | %s (deleted)\n", c.Name, minuses(c.DelLines))
-			continue
-		}
+		//if c.Inserted {
+		//	fmt.Fprintf(w, "%v\t | %s (inserted)\n", c.Name, pluses(c.InsLines))
+		//	continue
+		//}
+		//if c.Deleted {
+		//	fmt.Fprintf(w, "%v\t | %s (deleted)\n", c.Name, minuses(c.DelLines))
+		//	continue
+		//}
 		// Modified/other
 		fmt.Fprintf(w, "%v\t | %d %s%s\n", c.Name, c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
 	}
