@@ -62,7 +62,7 @@ func main() {
 		//	continue
 		//}
 		// Modified/other
-		fmt.Fprintf(w, "%v\t | %d %s%s\n", c.Name, c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
+		fmt.Fprintf(w, "%v\t | %d\t %s%s\t\n", c.Name, c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
 	}
 	fmt.Fprintln(w)
 	w.Flush()
