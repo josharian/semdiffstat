@@ -51,20 +51,19 @@ func main() {
 		log.Fatalf("could not parse Go files %v and %v: %v\n", aName, bName, err)
 	}
 
-	aline := alignLines(changes)
+	max := maxCountLength(changes)
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
 	for _, c := range changes {
 		// TODO: general UI improvements
-		//if c.Inserted {
-		//	fmt.Fprintf(w, "%v\t | %s (inserted)\n", c.Name, pluses(c.InsLines))
-		//	continue
-		//}
-		//if c.Deleted {
-		//	fmt.Fprintf(w, "%v\t | %s (deleted)\n", c.Name, minuses(c.DelLines))
-		//	continue
-		//}
-		// Modified/other
-		fmt.Fprintf(w, "%v\t | %*d\t %s%s\t\n", c.Name, aline, c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
+		var annotation string
+		switch {
+		case c.Inserted:
+			annotation = " (inserted)"
+		case c.Deleted:
+			annotation = " (deleted)"
+		}
+		fmt.Fprintf(w, "%v\t | %*d\t %s%s%s\t\n", c.Name, max, c.InsLines+c.DelLines,
+			pluses(c.InsLines), minuses(c.DelLines), annotation)
 	}
 	fmt.Fprintln(w)
 	w.Flush()
@@ -82,14 +81,12 @@ func pluses(ins int) string {
 func minuses(del int) string {
 	return boldRed.Sprint(strings.Repeat("-", del))
 }
-func alignLines(changes []*semdiffstat.Change) (n int) {
-	var lens int
+func maxCountLength(changes []*semdiffstat.Change) (max int) {
 	for _, c := range changes {
-		lens = c.InsLines + c.DelLines
-		lens = len(strconv.Itoa(lens))
-		if lens > n {
-			n = lens
+		n := len(strconv.Itoa(c.InsLines + c.DelLines))
+		if n > max {
+			max = n
 		}
 	}
-	return n
+	return
 }
