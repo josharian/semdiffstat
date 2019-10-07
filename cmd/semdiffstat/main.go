@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 
@@ -50,6 +51,7 @@ func main() {
 		log.Fatalf("could not parse Go files %v and %v: %v\n", aName, bName, err)
 	}
 
+	aline := alignLines(changes)
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
 	for _, c := range changes {
 		// TODO: general UI improvements
@@ -62,7 +64,7 @@ func main() {
 		//	continue
 		//}
 		// Modified/other
-		fmt.Fprintf(w, "%v\t | %d\t %s%s\t\n", c.Name, c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
+		fmt.Fprintf(w, "%v\t | %*d\t %s%s\t\n", c.Name, aline, c.InsLines+c.DelLines, pluses(c.InsLines), minuses(c.DelLines))
 	}
 	fmt.Fprintln(w)
 	w.Flush()
@@ -79,4 +81,15 @@ func pluses(ins int) string {
 }
 func minuses(del int) string {
 	return boldRed.Sprint(strings.Repeat("-", del))
+}
+func alignLines(changes []*semdiffstat.Change) (n int) {
+	var lens int
+	for _, c := range changes {
+		lens = c.InsLines + c.DelLines
+		lens = len(strconv.Itoa(lens))
+		if lens > n {
+			n = lens
+		}
+	}
+	return n
 }
