@@ -13,13 +13,50 @@ func TestGo(t *testing.T) {
 		changes []*Change
 		err     error
 	}{
-		{
+		{ // 1
+			[]byte(emptyFile),
+			[]byte(baseFile),
+			[]*Change{
+				&Change{Name: "func aaaa", InsLines: 1, DelLines: 0, Inserted: true, Deleted: false, IsOther: false},
+				&Change{Name: "func bbbb", InsLines: 1, DelLines: 0, Inserted: true, Deleted: false, IsOther: false},
+				&Change{Name: "func main", InsLines: 1, DelLines: 0, Inserted: true, Deleted: false, IsOther: false},
+			},
+			error(nil),
+		},
+		{ // 2
+			[]byte(baseFile),
+			[]byte(emptyFile),
+			[]*Change{
+				&Change{Name: "func aaaa", InsLines: 0, DelLines: 1, Inserted: false, Deleted: true, IsOther: false},
+				&Change{Name: "func bbbb", InsLines: 0, DelLines: 1, Inserted: false, Deleted: true, IsOther: false},
+				&Change{Name: "func main", InsLines: 0, DelLines: 1, Inserted: false, Deleted: true, IsOther: false},
+			},
+			error(nil),
+		},
+		{ // 3
 			[]byte(baseFile),
 			[]byte(moveMain),
 			[]*Change{},
 			error(nil),
 		},
-		{
+		{ // 4
+			[]byte(baseFile),
+			[]byte(moveMainDeleteBbbb),
+			[]*Change{
+				&Change{Name: "func bbbb", InsLines: 0, DelLines: 1, Inserted: false, Deleted: true, IsOther: false},
+			},
+			error(nil),
+		},
+		{ // 5
+			[]byte(baseFile),
+			[]byte(moveMainDeleteBbbbAddLine),
+			[]*Change{
+				&Change{Name: "func bbbb", InsLines: 0, DelLines: 1, Inserted: false, Deleted: true, IsOther: false},
+				&Change{Name: "other", InsLines: 1, DelLines: 0, Inserted: false, Deleted: false, IsOther: true},
+			},
+			error(nil),
+		},
+		{ // 6
 			[]byte(baseFile),
 			[]byte(moveAndChangeMain),
 			[]*Change{
@@ -27,13 +64,13 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 7
 			[]byte(baseFile),
 			[]byte(moveAll),
 			[]*Change{},
 			error(nil),
 		},
-		{
+		{ // 8
 			[]byte(baseFile),
 			[]byte(moveAndChangeTwo),
 			[]*Change{
@@ -42,7 +79,7 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 9
 			[]byte(baseFile),
 			[]byte(changeAll),
 			[]*Change{
@@ -52,7 +89,7 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 10
 			[]byte(baseFile),
 			[]byte(moveAndChangeAll),
 			[]*Change{
@@ -62,7 +99,7 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 11
 			[]byte(baseFile),
 			[]byte(moveMainAndAddLine),
 			[]*Change{
@@ -70,7 +107,7 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 12
 			[]byte(baseFile),
 			[]byte(moveMainAndAdd3Lines),
 			[]*Change{
@@ -78,7 +115,7 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 13
 			[]byte(baseFile),
 			[]byte(baseFileMultiLine),
 			[]*Change{
@@ -88,7 +125,7 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 14
 			[]byte(baseFile),
 			[]byte(baseFileMultiLineMoveMain),
 			[]*Change{
@@ -98,13 +135,13 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 15
 			[]byte(baseFileMultiLine),
 			[]byte(baseFileMultiLineMoveMain),
 			[]*Change{},
 			error(nil),
 		},
-		{
+		{ // 16
 			[]byte(baseFile),
 			[]byte(baseFileMultiLineMoveMainAddLine),
 			[]*Change{
@@ -115,13 +152,33 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
-		{
+		{ // 17
 			[]byte(baseFile),
 			[]byte(baseFileMultiLineMoveMainAddLineAndReturn),
 			[]*Change{
 				&Change{Name: "func aaaa", InsLines: 2, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
 				&Change{Name: "func bbbb", InsLines: 2, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
 				&Change{Name: "func main", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "other", InsLines: 1, DelLines: 0, Inserted: false, Deleted: false, IsOther: true},
+			},
+			error(nil),
+		},
+		{ // 18
+			[]byte(baseFileMultiLine),
+			[]byte(baseFileMultiLineMoveMainAddLineAndReturn),
+			[]*Change{
+				&Change{Name: "func main", InsLines: 1, DelLines: 0, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "other", InsLines: 1, DelLines: 0, Inserted: false, Deleted: false, IsOther: true},
+			},
+			error(nil),
+		},
+		{ // 19
+			[]byte(baseFileMultiLine),
+			[]byte(baseFileMultiLineMoveMainAddLineAndReturnAll),
+			[]*Change{
+				&Change{Name: "func aaaa", InsLines: 1, DelLines: 0, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "func bbbb", InsLines: 1, DelLines: 0, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "func main", InsLines: 1, DelLines: 0, Inserted: false, Deleted: false, IsOther: false},
 				&Change{Name: "other", InsLines: 1, DelLines: 0, Inserted: false, Deleted: false, IsOther: true},
 			},
 			error(nil),
@@ -150,6 +207,8 @@ func TestGo(t *testing.T) {
 //------------------------------------------------------
 // test files
 
+const emptyFile = "package main"
+
 const baseFile = `package main
 func main() {}
 func aaaa() {}
@@ -159,6 +218,15 @@ const moveMain = `package main
 func aaaa() {}
 func main() {}
 func bbbb() {}`
+
+const moveMainDeleteBbbb = `package main
+func aaaa() {}
+func main() {}`
+
+const moveMainDeleteBbbbAddLine = `package main
+func aaaa() {}
+
+func main() {}`
 
 const moveAndChangeMain = `package main
 func aaaa() {}
@@ -232,4 +300,16 @@ func main() {
 	return
 }
 func bbbb() {
+}`
+
+const baseFileMultiLineMoveMainAddLineAndReturnAll = `package main
+
+func aaaa() {
+	return
+}
+func main() {
+	return
+}
+func bbbb() {
+	return
 }`
