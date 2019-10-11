@@ -94,9 +94,14 @@ func Go(a, b []byte) (changes []*Change, err error) {
 		}
 	}
 
+	var moved int // lines moved but not changed
 	for s, bi := range ins {
 		if ai, ok := del[s]; ok {
 			ds := x.diffstat(ai, bi)
+			if ds.del == 0 && ds.ins == 0 {
+				moved += len(bytes.Split(x.bBytes(bi), newline))
+				continue
+			}
 			changes = append(changes, &Change{Name: s, DelLines: ds.del, InsLines: ds.ins})
 		} else {
 			changes = append(changes, &Change{Name: s, Inserted: true, InsLines: len(bytes.Split(x.bBytes(bi), newline))})
@@ -120,15 +125,20 @@ func Go(a, b []byte) (changes []*Change, err error) {
 			ins -= c.InsLines
 			del -= c.DelLines
 		}
+		// Substract diffs accountable for moved elements.
+		ins -= moved
+		del -= moved
 		if ins < 0 {
 			ins = 0
 		}
 		if del < 0 {
 			del = 0
 		}
-		other.InsLines = ins
-		other.DelLines = del
-		changes = append(changes, other)
+		if !(ins == 0 && del == 0) {
+			other.InsLines = ins
+			other.DelLines = del
+			changes = append(changes, other)
+		}
 	}
 	sort.Slice(changes, func(i, j int) bool {
 		cj := changes[j]
