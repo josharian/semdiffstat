@@ -95,12 +95,21 @@ func Go(a, b []byte) (changes []*Change, err error) {
 	}
 
 	var moved int // lines moved but not changed
+	var reg = make(map[int]int)
 	for s, bi := range ins {
 		if ai, ok := del[s]; ok {
 			ds := x.diffstat(ai, bi)
 			if ds.del == 0 && ds.ins == 0 {
 				moved += len(bytes.Split(x.bBytes(bi), newline))
 				continue
+			}
+			bB := bytes.Split(x.bBytes(bi), newline)
+			aB := bytes.Split(x.aBytes(ai), newline)
+			_, ok1 := reg[bi]
+			if _, ok2 := reg[ai]; !ok1 && !ok2 && string(bB[0]) == string(aB[0]) && ai != bi { //FIXME refactor
+				moved += len(bytes.Split(x.bBytes(bi), newline)) - ds.del - ds.ins
+				reg[ai] = bi
+				reg[bi] = ai
 			}
 			changes = append(changes, &Change{Name: s, DelLines: ds.del, InsLines: ds.ins})
 		} else {
