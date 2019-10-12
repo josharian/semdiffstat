@@ -99,14 +99,26 @@ func Go(a, b []byte) (changes []*Change, err error) {
 			ds := x.diffstat(ai, bi)
 			changes = append(changes, &Change{Name: s, DelLines: ds.del, InsLines: ds.ins})
 		} else {
-			ds := x.diffstat(bi, bi)
-			changes = append(changes, &Change{Name: s, Inserted: true, InsLines: ds.ins})
+			var ln int
+			if len(ins) == len(del) {
+				ds := x.diffstat(bi, bi)
+				ln = ds.ins
+			} else {
+				ln = len(bytes.Split(x.bBytes(bi), newline))
+			}
+			changes = append(changes, &Change{Name: s, Inserted: true, InsLines: ln})
 		}
 	}
 	for s, ai := range del {
 		if _, ok := ins[s]; !ok {
-			ds := x.diffstat(ai, ai)
-			changes = append(changes, &Change{Name: s, Deleted: true, DelLines: ds.del})
+			var ln int
+			if len(ins) == len(del) {
+				ds := x.diffstat(ai, ai)
+				ln = ds.del
+			} else {
+				ln = len(bytes.Split(x.aBytes(ai), newline))
+			}
+			changes = append(changes, &Change{Name: s, Deleted: true, DelLines: ln})
 		}
 	}
 
