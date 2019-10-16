@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"math"
 	"sort"
 
 	"github.com/pkg/diff"
@@ -99,35 +100,57 @@ func Go(a, b []byte) (changes []*Change, err error) {
 			ds := x.diffstat(ai, bi)
 			changes = append(changes, &Change{Name: s, DelLines: ds.del, InsLines: ds.ins})
 		} else {
-			changes = append(changes, &Change{Name: s, Inserted: true, InsLines: len(bytes.Split(x.bBytes(bi), newline))})
+			changes = append(changes, &Change{Name: s, Inserted: true, InsLines: x.bLines(bi)})
 		}
 	}
 	for s, ai := range del {
 		if _, ok := ins[s]; !ok {
-			changes = append(changes, &Change{Name: s, Deleted: true, DelLines: len(bytes.Split(x.aBytes(ai), newline))})
+			changes = append(changes, &Change{Name: s, Deleted: true, DelLines: x.aLines(ai)})
 		}
 	}
 
 	if other != nil {
-		// Calculate an overall diffstat.
-		aLines := bytes.Split(a, newline)
-		bLines := bytes.Split(b, newline)
-		ab := diff.Bytes(aLines, bLines)
-		es := diff.Myers(context.Background(), ab)
-		ins, del := es.Stat()
-		// Subtract all diffs accountable for by other changes.
-		for _, c := range changes {
-			ins -= c.InsLines
-			del -= c.DelLines
+		// Calculate diffstats between declarations.
+		aIsLarger := false
+		lens := len(x.asplit) - 1
+		if len(x.asplit) > len(x.bsplit) {
+			lens = len(x.bsplit) - 1
+			aIsLarger = true
 		}
-		if ins < 0 {
-			ins = 0
+		// df keeps track of the difference between indices of x.asplit and x.bsplit.
+		// If df is increased, it means that an index has been displaced by some change.
+		var df int
+		for i := 1; i < lens; i++ {
+			if x.asplit[i] != (x.bsplit[i] - df) {
+				df = int(math.Abs(float64(x.asplit[i] - x.bsplit[i])))
+				// "other" changes may happen between even/odd indices only.
+				if (i-1)%2 == 0 {
+					ds := x.diffstat(i-1, i-1)
+					other.InsLines += ds.ins
+					other.DelLines += ds.del
+				}
+			}
 		}
-		if del < 0 {
-			del = 0
+		// If x.asplit and x.bsplit are not equal in length, we can't diffstat anymore,
+		// but we know all changes must be either insertions or deletions.
+		if len(x.asplit) != len(x.bsplit) {
+			split := &x.bsplit
+			splitF := func(i int) {
+				other.InsLines += x.bLinesNonEmpty(i)
+			}
+			if aIsLarger {
+				split = &x.asplit
+				splitF = func(i int) {
+					other.DelLines += x.aLinesNonEmpty(i)
+				}
+			}
+			for i := lens - 1; i < len(*split); i++ {
+				if i%2 == 0 {
+					splitF(i)
+				}
+			}
 		}
-		other.InsLines = ins
-		other.DelLines = del
+		//TODO check for "other" changes between last index and EOF
 		changes = append(changes, other)
 	}
 	sort.Slice(changes, func(i, j int) bool {
@@ -178,6 +201,32 @@ func (x *bySplits) Equal(ai, bi int) bool { return bytes.Equal(x.aBytes(ai), x.b
 // aBytes returns the bytes from asrc at split index ai.
 func (x *bySplits) aBytes(ai int) []byte { return x.asrc[x.asplit[ai]:x.asplit[ai+1]] }
 func (x *bySplits) bBytes(bi int) []byte { return x.bsrc[x.bsplit[bi]:x.bsplit[bi+1]] }
+
+func (x *bySplits) aLines(i int) int {
+	return len(bytes.Split(x.aBytes(i), newline))
+}
+
+func (x *bySplits) bLines(i int) int {
+	return len(bytes.Split(x.bBytes(i), newline))
+}
+
+func (x *bySplits) aLinesNonEmpty(i int) (lines int) {
+	for _, b := range bytes.Split(x.aBytes(i), newline) {
+		if len(b) != 0 {
+			lines++
+		}
+	}
+	return
+}
+
+func (x *bySplits) bLinesNonEmpty(i int) (lines int) {
+	for _, b := range bytes.Split(x.bBytes(i), newline) {
+		if len(b) != 0 {
+			lines++
+		}
+	}
+	return
+}
 
 var newline = []byte("\n")
 
