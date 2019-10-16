@@ -65,6 +65,28 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
+		{ // 6
+			[]byte(fileBNewLines),
+			[]byte(fileA),
+			[]*Change{
+				&Change{Name: "func aaaa", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "func bbbb", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "func main", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "other", InsLines: 1, DelLines: 7, Inserted: false, Deleted: false, IsOther: true},
+			},
+			error(nil),
+		},
+		{ // 7
+			[]byte(fileBDelete),
+			[]byte(fileA),
+			[]*Change{
+				&Change{Name: "func aaaa", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "func bbbb", InsLines: 1, DelLines: 0, Inserted: true, Deleted: false, IsOther: false},
+				&Change{Name: "func main", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "other", InsLines: 1, DelLines: 1, Inserted: false, Deleted: false, IsOther: true},
+			},
+			error(nil),
+		},
 	}
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("TEST %d/%d", i+1, len(tests)), func(t *testing.T) {
