@@ -7,7 +7,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"math"
 	"sort"
 
 	"github.com/pkg/diff"
@@ -119,10 +118,10 @@ func Go(a, b []byte) (changes []*Change, err error) {
 		}
 		// df keeps track of the difference between indices of x.asplit and x.bsplit.
 		// If df is increased, it means that an index has been displaced by some change.
-		var df int
+		var df int64
 		for i := 1; i < lens; i++ {
-			if x.asplit[i] != (x.bsplit[i] - df) {
-				df = int(math.Abs(float64(x.asplit[i] - x.bsplit[i])))
+			if int64(x.asplit[i]) != (int64(x.bsplit[i]) - df) {
+				df = abs(int64(x.asplit[i] - x.bsplit[i]))
 				// "other" changes may happen between even/odd indices only.
 				if (i-1)%2 == 0 {
 					ds := x.diffstat(i-1, i-1)
@@ -243,4 +242,9 @@ func (x *bySplits) diffstat(ai, bi int) diffstat {
 	es := diff.Myers(context.Background(), ab)
 	ins, del := es.Stat()
 	return diffstat{ins: ins, del: del}
+}
+
+func abs(i int64) int64 {
+	j := i >> 63
+	return (i ^ j) - j
 }
