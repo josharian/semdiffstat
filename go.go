@@ -109,7 +109,7 @@ func Go(a, b []byte) (changes []*Change, err error) {
 	}
 
 	if other != nil {
-		// Calculate diffstats between declarations.
+		// Calculate diffstats between non-declarations.
 		aIsLarger := false
 		lens := len(x.asplit) - 1
 		if len(x.asplit) > len(x.bsplit) {
@@ -123,8 +123,9 @@ func Go(a, b []byte) (changes []*Change, err error) {
 			if int64(x.asplit[i]) != (int64(x.bsplit[i]) - df) {
 				df = abs(int64(x.asplit[i] - x.bsplit[i]))
 				// "other" changes may happen between even/odd indices only.
-				if (i-1)%2 == 0 {
-					ds := x.diffstat(i-1, i-1)
+				j := i-1
+				if j%2 == 0 {
+					ds := x.diffstat(j, j)
 					other.InsLines += ds.ins
 					other.DelLines += ds.del
 				}
