@@ -54,6 +54,17 @@ func TestGo(t *testing.T) {
 			},
 			error(nil),
 		},
+		{ // 5
+			[]byte(fileA),
+			[]byte(fileBNewLines),
+			[]*Change{
+				&Change{Name: "func aaaa", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "func main", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
+				&Change{Name: "other", InsLines: 7, DelLines: 1, Inserted: false, Deleted: false, IsOther: true},
+			},
+			error(nil),
+		},
 	}
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("TEST %d/%d", i+1, len(tests)), func(t *testing.T) {
@@ -92,6 +103,24 @@ func main() {
 func aaaa() {
 	return
 }
+//comment
+func bbbb() {
+	return
+}`
+
+const fileBNewLines = `package main
+
+
+func main() {
+	return
+}
+
+//comment
+
+func aaaa() {
+	return
+}
+
 //comment
 func bbbb() {
 	return
