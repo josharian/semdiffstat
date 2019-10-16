@@ -133,17 +133,17 @@ func Go(a, b []byte) (changes []*Change, err error) {
 		// If x.asplit and x.bsplit are not equal in length, we can't diffstat anymore,
 		// but we know all changes must be either insertions or deletions.
 		if len(x.asplit) != len(x.bsplit) {
-			split := &x.bsplit
+			splitL := len(x.bsplit)
 			splitF := func(i int) {
 				other.InsLines += x.bLinesNonEmpty(i)
 			}
 			if aIsLarger {
-				split = &x.asplit
+				splitL = len(x.asplit)
 				splitF = func(i int) {
 					other.DelLines += x.aLinesNonEmpty(i)
 				}
 			}
-			for i := lens - 1; i < len(*split); i++ {
+			for i := lens - 1; i < splitL; i++ {
 				if i%2 == 0 {
 					splitF(i)
 				}
