@@ -122,7 +122,7 @@ func Go(a, b []byte) (changes []*Change, err error) {
 			if int64(x.asplit[i]) != (int64(x.bsplit[i]) - df) {
 				df = abs(int64(x.asplit[i] - x.bsplit[i]))
 				// "other" changes may happen at even indices only.
-				j := i-1
+				j := i - 1
 				if j%2 == 0 {
 					ds := x.diffstat(j, j)
 					other.InsLines += ds.ins
@@ -133,19 +133,17 @@ func Go(a, b []byte) (changes []*Change, err error) {
 		// If x.asplit and x.bsplit are not equal in length,
 		// the remaining changes must be either insertions or deletions.
 		if len(x.asplit) != len(x.bsplit) {
-			splitL := len(x.bsplit)
-			splitF := func(i int) {
-				other.InsLines += x.bLinesNonEmpty(i)
-			}
 			if aIsLarger {
-				splitL = len(x.asplit)
-				splitF = func(i int) {
-					other.DelLines += x.aLinesNonEmpty(i)
+				for i := lens - 1; i < len(x.asplit); i++ {
+					if i%2 == 0 {
+						other.DelLines += x.aLinesNonEmpty(i)
+					}
 				}
-			}
-			for i := lens - 1; i < splitL; i++ {
-				if i%2 == 0 {
-					splitF(i)
+			} else {
+				for i := lens - 1; i < len(x.bsplit); i++ {
+					if i%2 == 0 {
+						other.InsLines += x.bLinesNonEmpty(i)
+					}
 				}
 			}
 		}
