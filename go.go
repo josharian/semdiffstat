@@ -116,13 +116,12 @@ func Go(a, b []byte) (changes []*Change, err error) {
 			lens = len(x.bsplit) - 1
 			aIsLarger = true
 		}
-		// df keeps track of the difference between indices of x.asplit and x.bsplit.
 		// If df is increased, it means that an index has been displaced by some change.
 		var df int64
 		for i := 1; i < lens; i++ {
 			if int64(x.asplit[i]) != (int64(x.bsplit[i]) - df) {
 				df = abs(int64(x.asplit[i] - x.bsplit[i]))
-				// "other" changes may happen between even/odd indices only.
+				// "other" changes may happen at even indices only.
 				j := i-1
 				if j%2 == 0 {
 					ds := x.diffstat(j, j)
@@ -131,8 +130,8 @@ func Go(a, b []byte) (changes []*Change, err error) {
 				}
 			}
 		}
-		// If x.asplit and x.bsplit are not equal in length, we can't diffstat anymore,
-		// but we know all changes must be either insertions or deletions.
+		// If x.asplit and x.bsplit are not equal in length,
+		// the remaining changes must be either insertions or deletions.
 		if len(x.asplit) != len(x.bsplit) {
 			splitL := len(x.bsplit)
 			splitF := func(i int) {
