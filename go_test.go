@@ -1,96 +1,80 @@
 package semdiffstat
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
 
 func TestGo(t *testing.T) {
 	tests := []struct {
-		fileA   []byte
-		fileB   []byte
+		name    string
+		fileA   string
+		fileB   string
 		changes []*Change
 		err     error
 	}{
 		{ // 1
-			[]byte(fileA),
-			[]byte(fileB),
+			"inline funcs expanded +other",
+			fileA,
+			fileB,
 			[]*Change{
-				&Change{Name: "func aaaa", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func main", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "other", InsLines: 2, DelLines: 1, Inserted: false, Deleted: false, IsOther: true},
+				&Change{Name: "func aaaa", InsLines: 3, DelLines: 1},
+				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1},
+				&Change{Name: "func main", InsLines: 3, DelLines: 1},
+				&Change{Name: "other", InsLines: 2, DelLines: 1, IsOther: true},
 			},
 			error(nil),
 		},
 		{ // 2
-			[]byte(fileB),
-			[]byte(fileBRename),
+			"func renamed +other",
+			fileB,
+			fileBRename,
 			[]*Change{
-				&Change{Name: "func aaaa", InsLines: 0, DelLines: 3, Inserted: false, Deleted: true, IsOther: false},
-				&Change{Name: "func xxxx", InsLines: 3, DelLines: 0, Inserted: true, Deleted: false, IsOther: false},
+				&Change{Name: "func aaaa", InsLines: 0, DelLines: 3, Deleted: true},
+				&Change{Name: "func xxxx", InsLines: 3, DelLines: 0, Inserted: true},
+				&Change{Name: "other", InsLines: 1, DelLines: 0, IsOther: true},
 			},
 			error(nil),
 		},
 		{ // 3
-			[]byte(fileB),
-			[]byte(fileBDelete),
+			"func deleted +other",
+			fileB,
+			fileBDelete,
 			[]*Change{
-				&Change{Name: "func bbbb", InsLines: 0, DelLines: 3, Inserted: false, Deleted: true, IsOther: false},
-				&Change{Name: "other", InsLines: 0, DelLines: 1, Inserted: false, Deleted: false, IsOther: true},
+				&Change{Name: "func bbbb", InsLines: 0, DelLines: 3, Deleted: true},
+				&Change{Name: "other", InsLines: 0, DelLines: 1, IsOther: true},
 			},
 			error(nil),
 		},
 		{ // 4
-			[]byte(fileA),
-			[]byte(fileBRename),
+			"inline funcs expanded and renamed +other",
+			fileA,
+			fileBRename,
 			[]*Change{
-				&Change{Name: "func aaaa", InsLines: 0, DelLines: 1, Inserted: false, Deleted: true, IsOther: false},
-				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func main", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func xxxx", InsLines: 3, DelLines: 0, Inserted: true, Deleted: false, IsOther: false},
-				&Change{Name: "other", InsLines: 2, DelLines: 1, Inserted: false, Deleted: false, IsOther: true},
+				&Change{Name: "func aaaa", InsLines: 0, DelLines: 1, Deleted: true},
+				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1},
+				&Change{Name: "func main", InsLines: 3, DelLines: 1},
+				&Change{Name: "func xxxx", InsLines: 3, DelLines: 0, Inserted: true},
+				&Change{Name: "other", InsLines: 3, DelLines: 1, IsOther: true},
 			},
 			error(nil),
 		},
 		{ // 5
-			[]byte(fileA),
-			[]byte(fileBNewLines),
+			"insert func and inline all +other",
+			fileBDelete,
+			fileA,
 			[]*Change{
-				&Change{Name: "func aaaa", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func main", InsLines: 3, DelLines: 1, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "other", InsLines: 7, DelLines: 1, Inserted: false, Deleted: false, IsOther: true},
-			},
-			error(nil),
-		},
-		{ // 6
-			[]byte(fileBNewLines),
-			[]byte(fileA),
-			[]*Change{
-				&Change{Name: "func aaaa", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func bbbb", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func main", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "other", InsLines: 1, DelLines: 7, Inserted: false, Deleted: false, IsOther: true},
-			},
-			error(nil),
-		},
-		{ // 7
-			[]byte(fileBDelete),
-			[]byte(fileA),
-			[]*Change{
-				&Change{Name: "func aaaa", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "func bbbb", InsLines: 1, DelLines: 0, Inserted: true, Deleted: false, IsOther: false},
-				&Change{Name: "func main", InsLines: 1, DelLines: 3, Inserted: false, Deleted: false, IsOther: false},
-				&Change{Name: "other", InsLines: 1, DelLines: 1, Inserted: false, Deleted: false, IsOther: true},
+				&Change{Name: "func aaaa", InsLines: 1, DelLines: 3},
+				&Change{Name: "func bbbb", InsLines: 1, DelLines: 0, Inserted: true},
+				&Change{Name: "func main", InsLines: 1, DelLines: 3},
+				&Change{Name: "other", InsLines: 1, DelLines: 1, IsOther: true},
 			},
 			error(nil),
 		},
 	}
-	for i, test := range tests {
-		t.Run(fmt.Sprintf("TEST %d/%d", i+1, len(tests)), func(t *testing.T) {
-			changes, err := Go(test.fileA, test.fileB)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			changes, err := Go([]byte(test.fileA), []byte(test.fileB))
 			if err != test.err {
 				t.Fatalf("expected %v, got %v", test.err, err)
 			}
@@ -112,7 +96,7 @@ func TestGo(t *testing.T) {
 // test files
 
 const fileA = `package main
-//comment
+// main docs
 func main() {}
 func aaaa() {}
 func bbbb() {}`
@@ -121,29 +105,11 @@ const fileB = `package main
 func main() {
 	return
 }
-//comment
+// aaaa docs
 func aaaa() {
 	return
 }
-//comment
-func bbbb() {
-	return
-}`
-
-const fileBNewLines = `package main
-
-
-func main() {
-	return
-}
-
-//comment
-
-func aaaa() {
-	return
-}
-
-//comment
+// bbbb docs
 func bbbb() {
 	return
 }`
@@ -152,11 +118,12 @@ const fileBRename = `package main
 func main() {
 	return
 }
-//comment
+// xxxx docs
 func xxxx() {
 	return
 }
-//comment
+// bbbb docs
+// bbbb added line
 func bbbb() {
 	return
 }`
@@ -165,7 +132,7 @@ const fileBDelete = `package main
 func main() {
 	return
 }
-//comment
+// aaaa docs
 func aaaa() {
 	return
 }`

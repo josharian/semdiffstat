@@ -111,16 +111,17 @@ func Go(a, b []byte) (changes []*Change, err error) {
 	if other != nil {
 		// Calculate diffstats between non-declarations.
 		aIsLarger := false
-		lens := len(x.asplit) - 1
+		minsplit := len(x.asplit) - 1
 		if len(x.asplit) > len(x.bsplit) {
-			lens = len(x.bsplit) - 1
+			minsplit = len(x.bsplit) - 1
 			aIsLarger = true
 		}
 		// If df is increased, it means that an index has been displaced by some change.
-		var df int64
-		for i := 1; i < lens; i++ {
-			if int64(x.asplit[i]) != (int64(x.bsplit[i]) - df) {
-				df = abs(int64(x.asplit[i] - x.bsplit[i]))
+		var df int
+		// x.asplit[0] and x.bsplit[0] will always be 0, start at index 1.
+		for i := 1; i < minsplit; i++ {
+			if x.asplit[i] != (x.bsplit[i] - df) {
+				df = abs(x.asplit[i] - x.bsplit[i])
 				// "other" changes may happen at even indices only.
 				j := i - 1
 				if j%2 == 0 {
@@ -132,18 +133,16 @@ func Go(a, b []byte) (changes []*Change, err error) {
 		}
 		// If x.asplit and x.bsplit are not equal in length,
 		// the remaining changes must be either insertions or deletions.
-		if len(x.asplit) != len(x.bsplit) {
-			if aIsLarger {
-				for i := lens - 1; i < len(x.asplit); i++ {
-					if i%2 == 0 {
-						other.DelLines += x.aLinesNonEmpty(i)
-					}
+		if aIsLarger {
+			for i := minsplit - 1; i < len(x.asplit); i++ {
+				if i%2 == 0 {
+					other.DelLines += x.aNonEmptyLines(i)
 				}
-			} else {
-				for i := lens - 1; i < len(x.bsplit); i++ {
-					if i%2 == 0 {
-						other.InsLines += x.bLinesNonEmpty(i)
-					}
+			}
+		} else {
+			for i := minsplit - 1; i < len(x.bsplit); i++ {
+				if i%2 == 0 {
+					other.InsLines += x.bNonEmptyLines(i)
 				}
 			}
 		}
@@ -207,19 +206,19 @@ func (x *bySplits) bLines(i int) int {
 	return len(bytes.Split(x.bBytes(i), newline))
 }
 
-func (x *bySplits) aLinesNonEmpty(i int) (lines int) {
+func (x *bySplits) aNonEmptyLines(i int) (n int) {
 	for _, b := range bytes.Split(x.aBytes(i), newline) {
 		if len(b) != 0 {
-			lines++
+			n++
 		}
 	}
 	return
 }
 
-func (x *bySplits) bLinesNonEmpty(i int) (lines int) {
+func (x *bySplits) bNonEmptyLines(i int) (n int) {
 	for _, b := range bytes.Split(x.bBytes(i), newline) {
 		if len(b) != 0 {
-			lines++
+			n++
 		}
 	}
 	return
@@ -242,7 +241,9 @@ func (x *bySplits) diffstat(ai, bi int) diffstat {
 	return diffstat{ins: ins, del: del}
 }
 
-func abs(i int64) int64 {
-	j := i >> 63
-	return (i ^ j) - j
+func abs(i int) int {
+	if i < 0 {
+		i *= -1
+	}
+	return i
 }
