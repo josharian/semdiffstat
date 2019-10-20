@@ -99,36 +99,35 @@ func Go(a, b []byte) (changes []*Change, err error) {
 			ds := x.diffstat(ai, bi)
 			changes = append(changes, &Change{Name: s, DelLines: ds.del, InsLines: ds.ins})
 		} else {
-			changes = append(changes, &Change{Name: s, Inserted: true, InsLines: len(bytes.Split(x.bBytes(bi), newline))})
+			changes = append(changes, &Change{Name: s, Inserted: true, InsLines: x.bLines(bi)})
 		}
 	}
 	for s, ai := range del {
 		if _, ok := ins[s]; !ok {
-			changes = append(changes, &Change{Name: s, Deleted: true, DelLines: len(bytes.Split(x.aBytes(ai), newline))})
+			changes = append(changes, &Change{Name: s, Deleted: true, DelLines: x.aLines(ai)})
 		}
 	}
 
 	if other != nil {
-		// Calculate an overall diffstat.
-		aLines := bytes.Split(a, newline)
-		bLines := bytes.Split(b, newline)
-		ab := diff.Bytes(aLines, bLines)
-		es := diff.Myers(context.Background(), ab)
-		ins, del := es.Stat()
-		// Subtract all diffs accountable for by other changes.
+		// Subtract lines between both files.
+		aLines := len(bytes.Split(a, newline))
+		bLines := len(bytes.Split(b, newline))
+		diff := bLines - aLines
+		// Subtract lines already claimed by declarations.
 		for _, c := range changes {
-			ins -= c.InsLines
-			del -= c.DelLines
+			diff -= c.InsLines - c.DelLines
 		}
-		if ins < 0 {
-			ins = 0
+		if diff > 0 {
+			other.InsLines += diff
+		} else {
+			other.DelLines += (-1) * diff
 		}
-		if del < 0 {
-			del = 0
+		if other.InsLines < 0 || other.DelLines < 0 {
+			panic("negative ins/del counts for other")
 		}
-		other.InsLines = ins
-		other.DelLines = del
-		changes = append(changes, other)
+		if !(other.InsLines == 0 && other.DelLines == 0) {
+			changes = append(changes, other)
+		}
 	}
 	sort.Slice(changes, func(i, j int) bool {
 		cj := changes[j]
@@ -178,6 +177,14 @@ func (x *bySplits) Equal(ai, bi int) bool { return bytes.Equal(x.aBytes(ai), x.b
 // aBytes returns the bytes from asrc at split index ai.
 func (x *bySplits) aBytes(ai int) []byte { return x.asrc[x.asplit[ai]:x.asplit[ai+1]] }
 func (x *bySplits) bBytes(bi int) []byte { return x.bsrc[x.bsplit[bi]:x.bsplit[bi+1]] }
+
+func (x *bySplits) aLines(i int) int {
+	return len(bytes.Split(x.aBytes(i), newline))
+}
+
+func (x *bySplits) bLines(i int) int {
+	return len(bytes.Split(x.bBytes(i), newline))
+}
 
 var newline = []byte("\n")
 
