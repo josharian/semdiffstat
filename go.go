@@ -110,9 +110,9 @@ func Go(a, b []byte) (changes []*Change, err error) {
 
 	if other != nil {
 		// Subtract lines between both files.
-		a := len(bytes.Split(x.asrc, newline))
-		b := len(bytes.Split(x.bsrc, newline))
-		diff := b - a
+		aLines := len(bytes.Split(x.asrc, newline))
+		bLines := len(bytes.Split(x.bsrc, newline))
+		diff := bLines - aLines
 		// Subtract lines already claimed by declarations.
 		for _, c := range changes {
 			diff -= c.InsLines - c.DelLines
