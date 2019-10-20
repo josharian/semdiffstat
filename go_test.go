@@ -21,7 +21,7 @@ func TestGo(t *testing.T) {
 				&Change{Name: "func aaaa", InsLines: 3, DelLines: 1},
 				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1},
 				&Change{Name: "func main", InsLines: 3, DelLines: 1},
-				&Change{Name: "other", InsLines: 2, DelLines: 1, IsOther: true},
+				&Change{Name: "other", InsLines: 1, IsOther: true},
 			},
 			error(nil),
 		},
@@ -32,7 +32,7 @@ func TestGo(t *testing.T) {
 			[]*Change{
 				&Change{Name: "func aaaa", InsLines: 0, DelLines: 3, Deleted: true},
 				&Change{Name: "func xxxx", InsLines: 3, DelLines: 0, Inserted: true},
-				&Change{Name: "other", InsLines: 1, DelLines: 0, IsOther: true},
+				&Change{Name: "other", InsLines: 1, IsOther: true},
 			},
 			error(nil),
 		},
@@ -42,7 +42,7 @@ func TestGo(t *testing.T) {
 			fileBDelete,
 			[]*Change{
 				&Change{Name: "func bbbb", InsLines: 0, DelLines: 3, Deleted: true},
-				&Change{Name: "other", InsLines: 0, DelLines: 1, IsOther: true},
+				&Change{Name: "other", DelLines: 1, IsOther: true},
 			},
 			error(nil),
 		},
@@ -55,19 +55,42 @@ func TestGo(t *testing.T) {
 				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1},
 				&Change{Name: "func main", InsLines: 3, DelLines: 1},
 				&Change{Name: "func xxxx", InsLines: 3, DelLines: 0, Inserted: true},
-				&Change{Name: "other", InsLines: 3, DelLines: 1, IsOther: true},
+				&Change{Name: "other", InsLines: 2, IsOther: true},
 			},
 			error(nil),
 		},
 		{ // 5
-			"insert func and inline all +other",
+			"insert func and inline all",
 			fileBDelete,
 			fileA,
 			[]*Change{
 				&Change{Name: "func aaaa", InsLines: 1, DelLines: 3},
 				&Change{Name: "func bbbb", InsLines: 1, DelLines: 0, Inserted: true},
 				&Change{Name: "func main", InsLines: 1, DelLines: 3},
-				&Change{Name: "other", InsLines: 1, DelLines: 1, IsOther: true},
+			},
+			error(nil),
+		},
+		{ // 6
+			"inline funcs expanded with docs +other",
+			fileA,
+			fileBDocs,
+			[]*Change{
+				&Change{Name: "func aaaa", InsLines: 3, DelLines: 1},
+				&Change{Name: "func bbbb", InsLines: 3, DelLines: 1},
+				&Change{Name: "func main", InsLines: 3, DelLines: 1},
+				&Change{Name: "other", InsLines: 8, IsOther: true},
+			},
+			error(nil),
+		},
+		{ // 7
+			"expanded funcs inlined with docs +other",
+			fileBDocs,
+			fileA,
+			[]*Change{
+				&Change{Name: "func aaaa", InsLines: 1, DelLines: 3},
+				&Change{Name: "func bbbb", InsLines: 1, DelLines: 3},
+				&Change{Name: "func main", InsLines: 1, DelLines: 3},
+				&Change{Name: "other", DelLines: 8, IsOther: true},
 			},
 			error(nil),
 		},
@@ -136,3 +159,23 @@ func main() {
 func aaaa() {
 	return
 }`
+
+const fileBDocs = `// package docs
+package main
+// main docs
+// main 1
+func main() {
+	return
+}
+// aaaa docs
+// aaaa 1
+// aaaa 2
+func aaaa() {
+	return
+}
+// bbbb docs
+// bbbb 1
+func bbbb() {
+	return
+}
+// EOF docs`
